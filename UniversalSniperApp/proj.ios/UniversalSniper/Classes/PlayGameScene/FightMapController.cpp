@@ -9,6 +9,11 @@
 #include "FightMapController.h"
 #include "../GameObject/UConstant.h"
 
+enum ChildZOrderNum {
+    Default_Zorder = 0,
+    MaskTexture_Zorder = 1,
+};
+
 FightMapController::FightMapController()
 {
     m_node = NULL;
@@ -16,6 +21,7 @@ FightMapController::FightMapController()
     m_baseScale = 1;
     m_mapScrollByFinger = false;
     m_zoomOutState = false;
+    m_maskTexture = NULL;
 }
 
 FightMapController::~FightMapController()
@@ -72,12 +78,12 @@ void FightMapController::setBoundingRect(float widthOffset, float heightOffset)
 void FightMapController::zoomOutOnPoint(CCPoint zoomOutOnPoint)
 {
     m_zoomOutState = true;
+    this -> addMaskTexture();
     CCPoint offsetPos = ccpSub(zoomOutOnPoint,m_originalPoint);
-    m_node->setScale(m_baseScale*m_zoomOutScale);
     offsetPos = ccpMult(offsetPos, m_zoomOutScale);
     CCPoint newPos = ccpSub(m_originalPoint, offsetPos);
     newPos = getNewPosWhenScroll(newPos);
-    m_node->setPosition(newPos);
+    m_node->runAction(CCSpawn::createWithTwoActions(CCScaleTo::create(0.2, m_baseScale*m_zoomOutScale), CCMoveTo::create(0.2, newPos)));
 }
 
 //恢复到原始图片大小
@@ -85,6 +91,7 @@ void FightMapController::zoomToOriganlState()
 {
     CCLOG("zoomToOriganlState");
     m_zoomOutState = false;
+    this->hideMaskTexture();
     m_node -> setScale(m_baseScale);
     m_node -> setPosition(m_originalPoint);
 }
@@ -135,4 +142,36 @@ CCPoint FightMapController::getNewPosWhenScroll(cocos2d::CCPoint newPos)
     newPos.y = MIN(newPos.y, m_maxHeightOffset);
     newPos.y = MAX(newPos.y, m_minHeightOffset);
     return newPos;
+}
+
+void FightMapController::addMaskTexture()
+{
+    if (!m_maskTexture) {
+        CCSize pWinSize = CCDirector::sharedDirector()->getWinSize();
+        m_maskTexture = CCRenderTexture::create(pWinSize.width, pWinSize.height, kCCTexture2DPixelFormat_RGBA8888);
+        m_maskTexture -> setPosition(ccp(pWinSize.width/2, pWinSize.height/2));
+        this -> addChild(m_maskTexture,MaskTexture_Zorder);
+        
+        CCSprite *m_mask = CCSprite::create("image/sniperscope_0.png");
+        m_mask ->setScale(m_baseScale);
+        m_mask->setPosition(ccp(pWinSize.width*0.5, pWinSize.height*0.5));
+        
+        ccBlendFunc blend;
+        blend.src = GL_ONE;
+        blend.dst = GL_ZERO;
+        m_mask->setBlendFunc(blend);
+        
+        m_maskTexture->clear(0,0,0,1.0f);
+        m_maskTexture->begin();
+        m_mask->visit();
+        m_maskTexture->end();
+        
+    }else{
+        m_maskTexture -> setVisible(true);
+    }
+}
+
+void FightMapController::hideMaskTexture()
+{
+    m_maskTexture -> setVisible(false);
 }

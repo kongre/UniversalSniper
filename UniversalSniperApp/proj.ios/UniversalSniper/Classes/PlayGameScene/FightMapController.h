@@ -30,6 +30,9 @@ private:
     void zoomToOriganlState();
     CCPoint getNewPosWhenScroll(CCPoint newPos);
     
+    void addMaskTexture();
+    void hideMaskTexture();
+    
     virtual void ccTouchesBegan(cocos2d::CCSet *pTouches, cocos2d::CCEvent *pEvent);
     virtual void ccTouchesMoved(cocos2d::CCSet *pTouches, cocos2d::CCEvent *pEvent);
     virtual void ccTouchesEnded(cocos2d::CCSet *pTouches, cocos2d::CCEvent *pEvent);
@@ -48,6 +51,8 @@ private:
     float m_minWidthOffset;//移动最小偏移width
     float m_maxHeightOffset;//移动最大偏移height
     float m_minHeightOffset;//移动最小偏移height
+    
+    CCRenderTexture *m_maskTexture;//狙击镜遮罩
 };
 
 #endif /* defined(__UniversalSniper__FightMapController__) */
